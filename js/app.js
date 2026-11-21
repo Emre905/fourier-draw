@@ -238,8 +238,14 @@ function runProcess() {
 let deleted = [];   // [{ layer, cx, cy, len }] normalised by width — survives re-processing
 function isDeleted(li, s, w) {
   const tol = 0.005;
-  return deleted.some((d) => d.layer === li && Math.abs(d.cx - s.cx / w) < tol && Math.abs(d.cy - s.cy / w) < tol
-    && Math.abs(d.len / (s.len / w) - 1) < 0.25);
+  const signature = s.X.join(',') + '|' + s.Y.join(',');
+  return deleted.some((d) => {
+    if (d.layer !== li) return false;
+    if (d.signature) return d.signature === signature;
+    return Math.abs(d.cx - s.cx / w) < tol 
+    && Math.abs(d.cy - s.cy / w) < tol
+    && Math.abs(d.len / (s.len / w) - 1) < 0.25;
+  });
 }
 
 /* ================= output ================= */
@@ -310,6 +316,23 @@ function rebuildOutput() {
   els.restoreAll.disabled = !deleted.length;
   announce(`${kept} strokes, ${chars} characters`);
   scheduleVerify();
+}
+
+function deleteStroke(s) {
+  if (!lastResult) return;
+  const li = lastResult.layers.findIndex((L) => L.strokes.includes(s));
+  if (li < 0) return;
+  const w = lastResult.width;
+  deleted.push({
+    layer: li,
+    signature: s.X.join(',') + '|' + s.Y.join(','),
+    cx: s.cx / w,
+    cy: s.cy / w,
+    len: s.len / w,
+  });
+  sketch.hover = null;
+  rebuildOutput();
+  toast(`Stroke deleted — Ctrl+Z to undo`);
 }
 
 function renderLayerTabs() {
@@ -399,13 +422,7 @@ els.sketch.addEventListener('click', (e) => {
   const h = sketch.hitTest(e.clientX, e.clientY, e.pointerType === 'touch' ? 14 : 8);
   if (!h) return;
   const s = output.layers[h.layer].strokes[h.index];
-  // map back to the worker layer index (output layers drop empty ones)
-  const li = lastResult.layers.findIndex((L) => L.strokes.includes(s));
-  const w = lastResult.width;
-  deleted.push({ layer: li, cx: s.cx / w, cy: s.cy / w, len: s.len / w });
-  sketch.hover = null;
-  rebuildOutput();
-  toast('Stroke deleted — Ctrl+Z to undo');
+  deleteStroke(s);
 });
 function undoDelete() {
   if (!deleted.length) return;

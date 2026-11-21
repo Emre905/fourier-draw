@@ -4,9 +4,11 @@
  * One equation for all strokes.
  *   (1/S) ( Σ_j X[P·[0…n−1]+j+1]·C ,  Σ_j Y[P·[0…n−1]+j+1]·C )
  *   C = cos(2π·floor(j/2)·t − (π/2)·mod(j,2))
- * `[0...n-1]` broadcasts into n separate parametric curves (no connecting lines).
- * NOTE: the \cdot before \left[0...n-1\right] is required — without it Desmos
- * reads "44[0...91]" as indexing the number 44.
+ *  `[0...n-1]` broadcasts into n separate parametric curves (no connecting lines).
+ *  desmos equation can  be written as: 
+ *  \frac{1}{S}\left(\sum_{j=0}^{n}a[Pi+j+1]\cos(2\pi\operatorname{floor}\left(j/2\right)t-\frac{\pi}{2}\operatorname{mod}(j,2)),\sum_{j=0}^{n}b[Pi+j+1]\cos(2\pi\operatorname{floor}\left(j/2\right)t-\frac{\pi}{2}\operatorname{mod}(j,2))\right)
+ *  here i = [0...n-1], P = 2(Kmax+1), S = scale, a = Xflat, b = Yflat
+ *  this notation corresponds to \bigcup_{i=0}^{n-1} { (x,y) : x = (1/S)Σ_j X[P·i+j+1]·C, y = (1/S)Σ_j Y[P·i+j+1]·C }.
  */
 export function buildEquation(Xflat, Yflat, n, Kmax, SCALE = 100) {
   const P = 2 * (Kmax + 1);
